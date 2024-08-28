@@ -14,20 +14,29 @@ from sendcloud_email.validationError import ValidationError
 
 class SendEmailResult:
 
-    def __init__(self, result: bool = None, status_code: int = None, message: str = None, info: object = None, json_data=None):
+    def __init__(self, result: bool = None, status_code: int = None, message: str = None, info: object = None,
+                 json_data=None):
         if json_data is not None:
-            # 从JSON数据初始化
             self.result = json_data.get('result', result)
             self.status_code = json_data.get('statusCode', status_code)
             self.message = json_data.get('message', message)
             self.info = json_data.get('info', info)
         else:
-            # 直接从参数初始化
             self.result = result
             self.status_code = status_code
             self.message = message
             self.info = info
 
+
+def handle_response(response):
+    if response.status_code == 404:
+        return SendEmailResult(False, response.status_code, "Not Found")
+    if response.status_code != 200:
+        return SendEmailResult(False, response.status_code, "API Error")
+    try:
+        return SendEmailResult(json_data=response.json())
+    except json.JSONDecodeError:
+        return SendEmailResult(False, 500, "Invalid JSON response")
 
 
 class SendCloud:
@@ -37,17 +46,7 @@ class SendCloud:
         self.api_base = api_base
         self.client = requests.Session()
 
-    def handle_response(self, response):
-        if response.status_code == 404:
-            return SendEmailResult(False, response.status_code, "Not Found")
-        if response.status_code != 200:
-            return SendEmailResult(False, response.status_code, "API Error")
-        try:
-            return SendEmailResult(json_data=response.json())
-        except json.JSONDecodeError:
-            return SendEmailResult(False, 500, "Invalid JSON response")
-
-    def validateConfig(self):
+    def validate_config(self):
         if not self.api_user:
             raise ValidationError("apiUser cannot be empty")
         if not self.api_key:
@@ -56,7 +55,7 @@ class SendCloud:
     def send_common_email(self, mail: CommonMail) -> SendEmailResult:
         send_common_url = self.api_base + "/send"
         try:
-            self.validateConfig()
+            self.validate_config()
             mail.validate_common_email()
         except ValidationError as e:
             return SendEmailResult(False, 400, e.message)
@@ -78,14 +77,14 @@ class SendCloud:
                     files = [(name, (basename, stack.enter_context(f), mime_type)) for name, (basename, f, mime_type) in
                              files]
                     response = requests.post(send_common_url, data=params, files=files)
-            return self.handle_response(response)
+            return handle_response(response)
         except Exception as e:
             return SendEmailResult(False, 400, f"Error: {str(e)}")
 
     def send_template_email(self, mail: TemplateMail) -> SendEmailResult:
         send_template_url = self.api_base + '/sendtemplate'
         try:
-            self.validateConfig()
+            self.validate_config()
             mail.validate_template_mail()
         except ValidationError as e:
             return SendEmailResult(False, 400, e.message)
@@ -107,14 +106,14 @@ class SendCloud:
                     files = [(name, (basename, stack.enter_context(f), mime_type)) for name, (basename, f, mime_type) in
                              files]
                     response = requests.post(send_template_url, data=params, files=files)
-            return self.handle_response(response)
+            return handle_response(response)
         except Exception as e:
             return SendEmailResult(False, 400, f"Error: {str(e)}")
 
     def send_calendar_mail(self, mail: CalendarMail) -> SendEmailResult:
         send_calendar_url = self.api_base + '/sendcalendar'
         try:
-            self.validateConfig()
+            self.validate_config()
             mail.validate_calendar_mail()
         except ValidationError as e:
             return SendEmailResult(False, 400, str(e))
@@ -136,6 +135,6 @@ class SendCloud:
                     files = [(name, (basename, stack.enter_context(f), mime_type)) for name, (basename, f, mime_type) in
                              files]
                     response = requests.post(send_calendar_url, data=params, files=files)
-            return self.handle_response(response)
+            return handle_response(response)
         except Exception as e:
             return SendEmailResult(False, 400, f"Error: {str(e)}")
