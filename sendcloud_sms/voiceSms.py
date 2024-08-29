@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 import json
 import time
-from typing import Optional
+from typing import Optional, Dict
 
 from sendcloud_sms.validator import ValidationError
 
 
 class VoiceSms:
-    def __init__(self, phone: str, code: str, label_id: int, send_request_id: Optional[str] = None,
-                 tag: Optional[str] = None):
+    def __init__(self, phone: str, code: str, label_id: Optional[int] = None, send_request_id: Optional[str] = None,
+                 tag: Optional[Dict[str, str]] = None):
         self.phone = phone
         self.code = code
         self.label_id = label_id
@@ -21,7 +21,7 @@ class VoiceSms:
             raise ValidationError("code cannot be empty")
         if len(self.phone) == 0:
             raise ValidationError("phone cannot be empty")
-        if len(self.send_request_id) > 128:
+        if self.send_request_id and len(self.send_request_id) > 128:
             raise ValidationError("sendRequestId cannot exceed 128 characters")
 
     def prepare_send_voice_sms_params(self, sms_user):

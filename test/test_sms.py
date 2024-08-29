@@ -12,46 +12,33 @@ from sendcloud_sms.voiceSms import VoiceSms
 class TestSendCloudSms(unittest.TestCase):
 
     def setUp(self):
-        self.send_cloud_sms = SendCloudSms("YOUR_API_KEY", "YOUR_SECRET_KEY")
-
+        self.send_cloud_sms = SendCloudSms("*", "*")
 
     def test_send_template_sms(self):
         template_sms = TemplateSms(
-            template_id=1,
-            label_id=1,
-            msg_type=1,
+            template_id=40513,
             phone="13800138000",
-            vars_str="{\"name\": \"John\"}",
-            send_request_id="request123",
-            tag="tag1"
+            vars_dict={"code": "John"},
+            tag={"tag1": "tag1"}
         )
         result = self.send_cloud_sms.send_template_sms(template_sms)
         print(result.message)
-
-
 
     def test_send_voice_sms(self):
         voice_sms = VoiceSms(
             phone="13800138000",
             code="123456",
-            label_id=1,
-            send_request_id="request123",
-            tag="tag1"
+            tag={"tag1": "tag1"}
         )
         result = self.send_cloud_sms.send_voice_sms(voice_sms)
         print(result.message)
 
-
     def test_send_code_sms(self):
         code_sms = CodeSms(
-            msg_type=1,
             phone="13800138000",
-            sign_id=1,
-            sign_name="TestSign",
+            sign_name="0516test",
             code="123456",
-            label_id=1,
-            send_request_id="request123",
-            tag="tag1"
+            tag={"tag1": "tag1"}
         )
         result = self.send_cloud_sms.send_code_sms(code_sms)
         print(result.message)

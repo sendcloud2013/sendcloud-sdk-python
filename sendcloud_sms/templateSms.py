@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 import json
 import time
-from typing import Optional
-
+from typing import Optional, Dict
 
 from sendcloud_sms.validator import is_valid_msg_type, ValidationError
 
 
 class TemplateSms:
-    def __init__(self, template_id: int, label_id: int, msg_type: int, phone: str, vars_str: str,
-                 send_request_id: Optional[str] = None, tag: Optional[str] = None):
+    def __init__(self, template_id: int, phone: str, msg_type: int = 0, label_id: Optional[int] = None,
+                 vars_dict: Optional[Dict[str, str]] = None,
+                 send_request_id: Optional[str] = None, tag: Optional[Dict[str, str]] = None):
         self.template_id = template_id
         self.label_id = label_id
         self.msg_type = msg_type
         self.phone = phone
-        self.vars_str = vars_str
+        self.vars_dict = vars_dict
         self.send_request_id = send_request_id
         self.tag = tag
 
@@ -34,7 +34,7 @@ class TemplateSms:
             raise ValidationError("msgType value is illegal")
         if len(self.phone) == 0:
             raise ValidationError("phone cannot be empty")
-        if len(self.send_request_id) > 128:
+        if self.send_request_id and len(self.send_request_id) > 128:
             raise ValidationError("sendRequestId cannot exceed 128 characters")
 
     def prepare_send_template_sms_params(self, sms_user):
@@ -45,8 +45,8 @@ class TemplateSms:
             'templateId': self.template_id,
             'timestamp': int(time.time() * 1000),  # 毫秒级时间戳
         }
-        if self.vars_str:
-            params['vars'] = json.dumps(self.vars_str)
+        if self.vars_dict:
+            params['vars'] = json.dumps(self.vars_dict)
         if self.label_id:
             params['labelId'] = self.label_id
         if self.send_request_id:
